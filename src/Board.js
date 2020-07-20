@@ -1,6 +1,6 @@
 import React, { Component } from "react";
-import "./Board.css";
 import Cell from "./Cell";
+import "./Board.css";
 
 class Board extends Component {
     static defaultProps = {
@@ -10,6 +10,7 @@ class Board extends Component {
     };
     constructor(props) {
         super(props);
+
         this.state = {
             hasWon: false,
             board: this.createBoard(),
@@ -18,11 +19,10 @@ class Board extends Component {
 
     createBoard() {
         let board = [];
-        //create array of arrays of true/false values
+        //create array of arrays of true/false values for lit vs not lit
         for (let y = 0; y < this.props.nrows; y++) {
             let row = [];
             for (let x = 0; x < this.props.ncols; x++) {
-                //push true/false based on if random num < .25 from props
                 row.push(Math.random() < this.props.chanceLightStartsOn);
             }
             board.push(row);
@@ -40,21 +40,58 @@ class Board extends Component {
                 board[y][x] = !board[y][x];
             }
         }
+
+        flipCell(y, x); //Flip cell
+        flipCell(y, x - 1); //flip left
+        flipCell(y, x + 1); //flip right
+        flipCell(y - 1, x); //flip below
+        flipCell(y + 1, x); //flip above
+
+        let hasWon = board.every(row => row.every(cell => !cell));
+
+        this.setState({ board: board, hasWon: hasWon });
     }
 
-    render() {
-        let tableBoard = [];
+    makeTable() {
+        let tblBoard = [];
         for (let y = 0; y < this.props.nrows; y++) {
             let row = [];
             for (let x = 0; x < this.props.ncols; x++) {
-                row.push(<Cell isLit={this.state.board[y][x]} />);
+                let coord = `${y}-${x}`;
+                row.push(
+                    <Cell
+                        key={coord}
+                        isLit={this.state.board[y][x]}
+                        flipCellsAroundMe={() => this.flipCellsAround(coord)}
+                    />
+                );
             }
-            tableBoard.push(<tr>{row}</tr>);
+            tblBoard.push(<tr key={y}>{row}</tr>);
         }
         return (
             <table className="Board">
-                <tbody>{tableBoard}</tbody>
+                <tbody>{tblBoard}</tbody>
             </table>
+        );
+    }
+    render() {
+        return (
+            <div>
+                {this.state.hasWon ? (
+                    <div className="winner">
+                        <span className="neon-orange">YOU</span>
+                        <span className="neon-blue">WIN!</span>
+                    </div>
+                ) : (
+                    <div>
+                        <div className="Board-title">
+                            <div className="neon-orange">Lights</div>
+                            <div className="neon-blue">Out</div>
+                        </div>
+                        {this.makeTable()}
+                    </div>
+                )}
+            </div>
         );
     }
 }
